@@ -5,12 +5,17 @@ export class GameScene extends Phaser.Scene {
   private turtle?: Phaser.GameObjects.Sprite;
   private isAnimating: boolean = false;
   private currentFrame: number = 0;
+  private textDisplay?: Phaser.GameObjects.Text;
 
   constructor() {
     super({ key: 'GameScene' });
   }
 
   preload() {
+    console.log('GameScene: preload() started');
+    console.log('Loading turtle sprite from:', ASSETS.IMAGES.TURTLE_SPRITE);
+    console.log('Loading sounds:', ASSETS.SOUNDS.HIIN_LONG, ASSETS.SOUNDS.HIIN_SHORT);
+
     // Load turtle sprite sheet
     this.load.spritesheet('turtle', ASSETS.IMAGES.TURTLE_SPRITE, {
       frameWidth: SPRITE_CONFIG.WIDTH,
@@ -20,12 +25,25 @@ export class GameScene extends Phaser.Scene {
     // Load sounds
     this.load.audio('hiin_long', ASSETS.SOUNDS.HIIN_LONG);
     this.load.audio('hiin_short', ASSETS.SOUNDS.HIIN_SHORT);
+
+    // Add load error handlers
+    this.load.on('loaderror', (file: any) => {
+      console.error('GameScene: Error loading file:', file.key, file.src);
+    });
+
+    this.load.on('complete', () => {
+      console.log('GameScene: All assets loaded successfully');
+    });
   }
 
   create() {
+    console.log('GameScene: create() started');
+
     // Center the turtle sprite
     const centerX = this.cameras.main.centerX;
     const centerY = this.cameras.main.centerY;
+
+    console.log('GameScene: Camera center:', centerX, centerY);
 
     // Create sprite animations
     this.anims.create({
@@ -50,6 +68,26 @@ export class GameScene extends Phaser.Scene {
     this.turtle.setInteractive();
     this.turtle.play('turtle_idle');
 
+    // Create text display (hidden initially)
+    this.textDisplay = this.add.text(centerX, centerY - 200, '', {
+      fontSize: '64px',
+      color: '#ffffff',
+      fontFamily: 'Arial, sans-serif',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 6,
+      align: 'center',
+      shadow: {
+        offsetX: 3,
+        offsetY: 3,
+        color: '#000000',
+        blur: 5,
+        fill: true
+      }
+    });
+    this.textDisplay.setOrigin(0.5);
+    this.textDisplay.setVisible(false);
+
     // Make it responsive - fit to screen
     this.fitToScreen();
 
@@ -58,6 +96,8 @@ export class GameScene extends Phaser.Scene {
 
     // Setup input handlers
     this.setupInputHandlers();
+
+    console.log('GameScene: create() completed');
   }
 
   private fitToScreen() {
@@ -65,6 +105,8 @@ export class GameScene extends Phaser.Scene {
 
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
+    const centerX = this.cameras.main.centerX;
+    const centerY = this.cameras.main.centerY;
 
     // Calculate scale to fit screen while maintaining aspect ratio
     const scaleX = width / SPRITE_CONFIG.WIDTH;
@@ -72,7 +114,15 @@ export class GameScene extends Phaser.Scene {
     const scale = Math.min(scaleX, scaleY) * 0.8; // 0.8 for some padding
 
     this.turtle.setScale(scale);
-    this.turtle.setPosition(this.cameras.main.centerX, this.cameras.main.centerY);
+    this.turtle.setPosition(centerX, centerY);
+
+    // Position text above turtle
+    if (this.textDisplay) {
+      this.textDisplay.setPosition(centerX, centerY - (SPRITE_CONFIG.HEIGHT * scale * 0.4));
+      // Scale text based on screen size
+      const textScale = Math.min(width / 800, height / 600) * 1.2;
+      this.textDisplay.setScale(textScale);
+    }
   }
 
   private setupInputHandlers() {
@@ -101,13 +151,45 @@ export class GameScene extends Phaser.Scene {
       this.turtle.play('turtle_open');
     }
 
+    // Show first text "Turtle Meeeeh!"
+    if (this.textDisplay) {
+      this.textDisplay.setText('Turtle Meeeeh!');
+      this.textDisplay.setVisible(true);
+
+      // Pulse animation for first text
+      this.tweens.add({
+        targets: this.textDisplay,
+        scaleX: { from: 1.0, to: 1.2 },
+        scaleY: { from: 1.0, to: 1.2 },
+        duration: 200,
+        yoyo: true,
+        repeat: -1,
+      });
+    }
+
     // Play first sound (long)
     const longSound = this.sound.add('hiin_long');
     longSound.play();
 
-    // After first sound, loop the short sound
+    // After first sound, loop the short sound and change text
     longSound.once('complete', () => {
       if (this.isAnimating) {
+        // Change text to "Ahahahaha!"
+        if (this.textDisplay) {
+          this.textDisplay.setText('Ahahahaha!');
+
+          // Stop old tween and create new faster pulse
+          this.tweens.killTweensOf(this.textDisplay);
+          this.tweens.add({
+            targets: this.textDisplay,
+            scaleX: { from: 1.0, to: 1.15 },
+            scaleY: { from: 1.0, to: 1.15 },
+            duration: 150,
+            yoyo: true,
+            repeat: -1,
+          });
+        }
+
         const shortSound = this.sound.add('hiin_short', { loop: true });
         shortSound.play();
         this.registry.set('loopingSound', shortSound);
@@ -123,6 +205,13 @@ export class GameScene extends Phaser.Scene {
 
     console.log('Stopping animation');
     this.isAnimating = false;
+
+    // Hide and stop text animations
+    if (this.textDisplay) {
+      this.tweens.killTweensOf(this.textDisplay);
+      this.textDisplay.setVisible(false);
+      this.textDisplay.setScale(1.0); // Reset scale
+    }
 
     // Stop all sounds
     this.sound.stopAll();
