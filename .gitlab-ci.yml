@@ -1,0 +1,18 @@
+image: alpine
+
+pages:
+  script:
+    # Specify the steps involved to build your app here
+    - ci/install_pages.sh
+  rules:
+    # If landing in default branch
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+    # This applies for MR only
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  artifacts:
+    paths:
+      # The folder that contains the built files to be published. This
+      # must be called "public".
+      - public
+#  tags:
+#    - turtlemehameha
