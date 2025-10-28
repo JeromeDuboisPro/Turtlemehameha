@@ -100,18 +100,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ onGameReady }) => {
 
   return (
     <div className="game-canvas-container" ref={containerRef}>
-      {loading && (
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          color: 'white',
-          fontSize: '24px'
-        }}>
-          Loading Game...
-        </div>
-      )}
+      {/* Phaser canvas will be injected here */}
     </div>
   );
 };
