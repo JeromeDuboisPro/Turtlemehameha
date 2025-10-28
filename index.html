@@ -1,190 +1,30 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
   <head>
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-      }
-      .imgbox {
-        display: grid;
-        height: 100%;
-      }
-      .center-fit {
-        max-width: 100%;
-        max-height: 100vh;
-        margin: auto;
-      }
-    </style>
+    <meta charset="utf-8" />
+    <title>Ionic App</title>
+    
+    <base href="/" />
+    
+    <meta name="color-scheme" content="light dark" />
+    <meta
+      name="viewport"
+      content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="msapplication-tap-highlight" content="no" />
+    
+    <link rel="manifest" href="/manifest.json" />
+    
+    <link rel="shortcut icon" type="image/png" href="/favicon.png" />
+    
+    <!-- add to homescreen for ios -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Ionic App" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   </head>
-  <body onload="loadSound()">
-    <div class="imgbox">
-      <canvas
-        id="canvas"
-        class="center-fit"
-        onpointerdown="start_animation_canvas(this)"
-        onpointerup="stop_animation_canvas(this)"
-      >
-        Your browser does not support canvas element.
-      </canvas>
-    </div>
-    <script src="https://code.createjs.com/1.0.0/soundjs.min.js"></script>
-    <script language="JavaScript">
-      var img_width = 752;
-      var img_height = 528;
-
-      var image_turtle_mouth_sprite =
-        "./media/images/turtle_head_mouth_sprite.png";
-      // audio part
-      var sound_turtle_hiin_first_path = "./media/sound/hiiin-long.ogg";
-      var first_sound_id = "first_hiin";
-      var first_hiin_loaded = false;
-      var first_hiin_duration = 1.537;
-      var sound_turtle_hiin_path = "./media/sound/hiiin-short.ogg";
-      var second_sound_id = "second_hiin";
-      var m_timeout;
-      var animation_started = false;
-
-      var beginDate = Date.now();
-
-      function loadSound() {
-        createjs.Sound.registerSound(
-          sound_turtle_hiin_first_path,
-          first_sound_id
-        );
-        createjs.Sound.registerSound(sound_turtle_hiin_path, second_sound_id);
-      }
-
-      /* When user first clicks and holds mouse button */
-      function start_animation_canvas(html_canvas) {
-        if (animation_started) {
-          return animation_started;
-        }
-        beginDate = Date.now();
-        animation_started = true;
-        ctx = html_canvas.getContext("2d");
-
-        ctx.drawImage(
-          turtle_img,
-          img_width + 1,
-          1,
-          img_width,
-          img_height,
-          img_width_offset,
-          img_height_offset,
-          img_width_ratioed,
-          img_height_ratioed
-        );
-        createjs.WebAudioPlugin.playEmptySound();
-        // View of the first audio
-        playFirstAnimation();
-      }
-
-      function playFirstAnimation() {
-        if (createjs.Sound.loadComplete(first_sound_id)) {
-          console.log("Playing first sound");
-          createjs.Sound.play(first_sound_id);
-          var timeout_value = first_hiin_duration * 1000;
-          m_timeout = setTimeout(continue_animation_canvas, timeout_value, ctx);
-        } else {
-          console.log("Waiting for 0.s to play sound");
-          setTimeout(playFirstAnimation, 0.1);
-        }
-      }
-
-      /* After chosen duration, turtle opens mouth */
-      function continue_animation_canvas(ctx) {
-        createjs.Sound.play(second_sound_id, { loop: -1 });
-        ctx.drawImage(
-          turtle_img,
-          2 * (img_width + 1),
-          1,
-          img_width,
-          img_height,
-          img_width_offset,
-          img_height_offset,
-          img_width_ratioed,
-          img_height_ratioed
-        );
-      }
-
-      /* When user releases mouse button */
-      function stop_animation_canvas(html_canvas) {
-        createjs.Sound.stop(first_sound_id);
-        createjs.Sound.stop(second_sound_id);
-        ctx = html_canvas.getContext("2d");
-        ctx.drawImage(
-          turtle_img,
-          0,
-          0,
-          img_width,
-          img_height,
-          img_width_offset,
-          img_height_offset,
-          img_width_ratioed,
-          img_height_ratioed
-        );
-        clearTimeout(m_timeout);
-        animation_started = false;
-      }
-
-      function fitToContainer(canvas) {
-        // Make it visually fill the positioned parent
-        canvas.style.width = "100%";
-        canvas.style.height = "100%";
-        // ...then set the internal size to match
-        canvas.width = canvas.offsetWidth;
-        canvas.height = canvas.offsetHeight;
-      }
-
-      var html_canvas = document.getElementById("canvas");
-      fitToContainer(html_canvas);
-
-      var w_ratio = html_canvas.width / img_width;
-      var h_ratio = html_canvas.height / img_height;
-      var a_ratio = Math.min(w_ratio, h_ratio);
-
-      var img_width_ratioed = img_width * a_ratio;
-      var img_height_ratioed = img_height * a_ratio;
-      var img_width_offset =
-        w_ratio <= 1 ? 0 : (html_canvas.width - img_width_ratioed) / 2;
-      var img_height_offset =
-        h_ratio <= 1 ? 0 : (html_canvas.height - img_height_ratioed) / 2;
-
-      var context = html_canvas.getContext("2d");
-      var turtle_img = new Image();
-      turtle_img.src = image_turtle_mouth_sprite;
-
-      turtle_img.addEventListener("load", function () {
-        context.drawImage(
-          turtle_img,
-          0,
-          0,
-          img_width,
-          img_height,
-          img_width_offset,
-          img_height_offset,
-          img_width_ratioed,
-          img_height_ratioed
-        );
-      });
-
-      document.body.addEventListener("mouseleave", function (event) {
-        if (
-          event.clientY <= 0 ||
-          event.clientX <= 0 ||
-          event.clientX >= window.innerWidth ||
-          event.clientY >= window.innerHeight
-        ) {
-          console.log("I'm out");
-          stop_animation_canvas(html_canvas);
-        }
-      });
-
-      createjs.Sound.on("fileload", handleFileLoad);
-      function handleFileLoad(event) {
-        // A sound has been preloaded.
-        console.log("Preloaded:", event.id, event.src);
-      }
-    </script>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -1,0 +1,11 @@
+.game-content {
+  --background: #000000;
+  --padding-top: 0;
+  --padding-bottom: 0;
+  --padding-start: 0;
+  --padding-end: 0;
+}
+
+.game-content::part(scroll) {
+  overflow: hidden;
+}
