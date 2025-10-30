@@ -2,9 +2,9 @@ import Phaser from 'phaser';
 import { ASSETS, SPRITE_CONFIG } from '../../utils/constants';
 
 export class GameScene extends Phaser.Scene {
-  private turtle?: Phaser.GameObjects.Sprite;
+  private turtle?: Phaser.GameObjects.Image;
   private isAnimating: boolean = false;
-  private currentFrame: number = 0;
+  private currentStage: number = 0;
   private textDisplay?: Phaser.GameObjects.Text;
 
   constructor() {
@@ -13,14 +13,14 @@ export class GameScene extends Phaser.Scene {
 
   preload() {
     console.log('GameScene: preload() started');
-    console.log('Loading turtle sprite from:', ASSETS.IMAGES.TURTLE_SPRITE);
+    console.log('Loading turtle images:', ASSETS.IMAGES.TURTLE_SHUT, ASSETS.IMAGES.TURTLE_OPEN_11, ASSETS.IMAGES.TURTLE_OPEN_22, ASSETS.IMAGES.TURTLE_OPEN_45);
     console.log('Loading sounds:', ASSETS.SOUNDS.HIIN_LONG, ASSETS.SOUNDS.HIIN_SHORT);
 
-    // Load turtle sprite sheet
-    this.load.spritesheet('turtle', ASSETS.IMAGES.TURTLE_SPRITE, {
-      frameWidth: SPRITE_CONFIG.WIDTH,
-      frameHeight: SPRITE_CONFIG.HEIGHT,
-    });
+    // Load individual turtle images
+    this.load.image('turtle_shut', ASSETS.IMAGES.TURTLE_SHUT);
+    this.load.image('turtle_open_11', ASSETS.IMAGES.TURTLE_OPEN_11);
+    this.load.image('turtle_open_22', ASSETS.IMAGES.TURTLE_OPEN_22);
+    this.load.image('turtle_open_45', ASSETS.IMAGES.TURTLE_OPEN_45);
 
     // Load sounds
     this.load.audio('hiin_long', ASSETS.SOUNDS.HIIN_LONG);
@@ -39,34 +39,15 @@ export class GameScene extends Phaser.Scene {
   create() {
     console.log('GameScene: create() started');
 
-    // Center the turtle sprite
+    // Center the turtle image
     const centerX = this.cameras.main.centerX;
     const centerY = this.cameras.main.centerY;
 
     console.log('GameScene: Camera center:', centerX, centerY);
 
-    // Create sprite animations
-    this.anims.create({
-      key: 'turtle_idle',
-      frames: [{ key: 'turtle', frame: 0 }],
-      frameRate: 1,
-    });
-
-    this.anims.create({
-      key: 'turtle_open',
-      frames: [
-        { key: 'turtle', frame: 0 },
-        { key: 'turtle', frame: 1 },
-        { key: 'turtle', frame: 2 },
-      ],
-      frameRate: 10,
-      repeat: 0,
-    });
-
-    // Create the turtle sprite
-    this.turtle = this.add.sprite(centerX, centerY, 'turtle');
+    // Create the turtle image (start with mouth shut)
+    this.turtle = this.add.image(centerX, centerY, 'turtle_shut');
     this.turtle.setInteractive();
-    this.turtle.play('turtle_idle');
 
     // Create text display (hidden initially)
     this.textDisplay = this.add.text(centerX, centerY - 200, '', {
@@ -143,57 +124,91 @@ export class GameScene extends Phaser.Scene {
   private startAnimation() {
     if (this.isAnimating) return;
 
-    console.log('Starting animation');
+    console.log('Starting animation - 3 stage sequence');
     this.isAnimating = true;
+    this.currentStage = 1;
 
-    // Play turtle animation
+    // STAGE 1: "Turtle" - slight opening
     if (this.turtle) {
-      this.turtle.play('turtle_open');
+      this.turtle.setTexture('turtle_open_11');
     }
 
-    // Show first text "Turtle Meeeeh!"
     if (this.textDisplay) {
-      this.textDisplay.setText('Turtle Meeeeh!');
+      this.textDisplay.setText('Turtle');
       this.textDisplay.setVisible(true);
 
-      // Pulse animation for first text
+      // Quick pulse for "Turtle"
       this.tweens.add({
         targets: this.textDisplay,
         scaleX: { from: 1.0, to: 1.2 },
         scaleY: { from: 1.0, to: 1.2 },
-        duration: 200,
+        duration: 150,
         yoyo: true,
         repeat: -1,
       });
     }
 
-    // Play first sound (long)
+    // Start playing long sound
     const longSound = this.sound.add('hiin_long');
     longSound.play();
 
-    // After first sound, loop the short sound and change text
-    longSound.once('complete', () => {
-      if (this.isAnimating) {
-        // Change text to "Ahahahaha!"
-        if (this.textDisplay) {
-          this.textDisplay.setText('Ahahahaha!');
+    // STAGE 2: "Meeeeh!" - medium opening (after 500ms)
+    this.time.delayedCall(500, () => {
+      if (!this.isAnimating) return;
 
-          // Stop old tween and create new faster pulse
-          this.tweens.killTweensOf(this.textDisplay);
-          this.tweens.add({
-            targets: this.textDisplay,
-            scaleX: { from: 1.0, to: 1.15 },
-            scaleY: { from: 1.0, to: 1.15 },
-            duration: 150,
-            yoyo: true,
-            repeat: -1,
-          });
-        }
+      this.currentStage = 2;
+      console.log('Stage 2: Meeeeh!');
 
-        const shortSound = this.sound.add('hiin_short', { loop: true });
-        shortSound.play();
-        this.registry.set('loopingSound', shortSound);
+      if (this.turtle) {
+        this.turtle.setTexture('turtle_open_22');
       }
+
+      if (this.textDisplay) {
+        this.textDisplay.setText('Meeeeh!');
+
+        // Slower pulse for "Meeeeh!"
+        this.tweens.killTweensOf(this.textDisplay);
+        this.tweens.add({
+          targets: this.textDisplay,
+          scaleX: { from: 1.0, to: 1.15 },
+          scaleY: { from: 1.0, to: 1.15 },
+          duration: 200,
+          yoyo: true,
+          repeat: -1,
+        });
+      }
+    });
+
+    // STAGE 3: "Ahahahaha!" - full opening with kamehameha (after long sound completes)
+    longSound.once('complete', () => {
+      if (!this.isAnimating) return;
+
+      this.currentStage = 3;
+      console.log('Stage 3: Ahahahaha! + looping sound');
+
+      if (this.turtle) {
+        this.turtle.setTexture('turtle_open_45');
+      }
+
+      if (this.textDisplay) {
+        this.textDisplay.setText('Ahahahaha!');
+
+        // Fast energetic pulse for final stage
+        this.tweens.killTweensOf(this.textDisplay);
+        this.tweens.add({
+          targets: this.textDisplay,
+          scaleX: { from: 1.0, to: 1.2 },
+          scaleY: { from: 1.0, to: 1.2 },
+          duration: 120,
+          yoyo: true,
+          repeat: -1,
+        });
+      }
+
+      // Start looping short sound
+      const shortSound = this.sound.add('hiin_short', { loop: true });
+      shortSound.play();
+      this.registry.set('loopingSound', shortSound);
     });
 
     // Emit event for game systems (power meter, score, etc.)
@@ -205,6 +220,7 @@ export class GameScene extends Phaser.Scene {
 
     console.log('Stopping animation');
     this.isAnimating = false;
+    this.currentStage = 0;
 
     // Hide and stop text animations
     if (this.textDisplay) {
@@ -223,9 +239,9 @@ export class GameScene extends Phaser.Scene {
       this.registry.remove('loopingSound');
     }
 
-    // Reset turtle to idle
+    // Reset turtle to shut mouth
     if (this.turtle) {
-      this.turtle.play('turtle_idle');
+      this.turtle.setTexture('turtle_shut');
     }
 
     // Emit event for game systems
