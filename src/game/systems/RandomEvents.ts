@@ -247,13 +247,11 @@ export class RandomEvents {
 
   /**
    * Reset all active effects
+   * Note: Does not kill scale tweens to allow smooth de-zoom
    */
   public resetEffects(target?: Phaser.GameObjects.Image): void {
     if (target) {
-      // Stop all tweens on target
-      this.scene.tweens.killTweensOf(target);
-
-      // Reset visual properties
+      // Reset visual properties (color, alpha) but preserve scale tweens
       target.setTint(this.originalColor);
       target.setAlpha(1);
 

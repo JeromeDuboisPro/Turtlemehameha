@@ -14,6 +14,7 @@ export class GameScene extends Phaser.Scene {
   private randomEvents?: RandomEvents;
   private loopingSound?: Phaser.Sound.BaseSound;
   private longSound?: Phaser.Sound.BaseSound;
+  private baseScale: number = 1;
 
   constructor() {
     super({ key: 'GameScene' });
@@ -127,6 +128,9 @@ export class GameScene extends Phaser.Scene {
     const scaleX = width / SPRITE_CONFIG.WIDTH;
     const scaleY = height / SPRITE_CONFIG.HEIGHT;
     const scale = Math.min(scaleX, scaleY) * 0.8; // 0.8 for some padding
+
+    // Store base scale for smooth reset animations
+    this.baseScale = scale;
 
     this.turtle.setScale(scale);
     this.turtle.setPosition(centerX, centerY);
@@ -273,7 +277,22 @@ export class GameScene extends Phaser.Scene {
       this.scoreSystem.incrementCombo();
     }
 
-    // Reset all visual effects
+    // Smoothly de-zoom turtle back to base scale
+    if (this.turtle) {
+      // Kill any existing scale tweens first
+      this.tweens.killTweensOf(this.turtle);
+
+      // Smoothly return to base scale over 0.5 seconds
+      this.tweens.add({
+        targets: this.turtle,
+        scaleX: this.baseScale,
+        scaleY: this.baseScale,
+        duration: 500,
+        ease: 'Back.easeOut',
+      });
+    }
+
+    // Reset visual effects (color, glow, etc.) without affecting scale
     if (this.randomEvents && this.turtle) {
       this.randomEvents.resetEffects(this.turtle);
     }
