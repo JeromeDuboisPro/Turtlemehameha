@@ -2,10 +2,10 @@
 export const ASSETS = {
   IMAGES: {
     TURTLE_SPRITE: '/assets/images/turtle_head_mouth_sprite.png',
-    TURTLE_SHUT: '/assets/images/turtle_head_mouth_shut.png',
+    TURTLE_SHUT: '/assets/images/turtle_head_mouth_shut_original.png',
     TURTLE_OPEN_11: '/assets/images/turtle_head_mouth_open_11.png',
     TURTLE_OPEN_22: '/assets/images/turtle_head_mouth_open_22.png',
-    TURTLE_OPEN_45: '/assets/images/turtle_head_mouth_open_45.png',
+    TURTLE_OPEN_45: '/assets/images/turtle_head_mouth_open_45_original.png',
   },
   SOUNDS: {
     HIIN_LONG: '/assets/sounds/hiiin-long.ogg',
