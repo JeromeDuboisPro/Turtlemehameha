@@ -96,6 +96,13 @@ export class GameScene extends Phaser.Scene {
       (power) => {
         // Power change callback
         this.events.emit('power_changed', power);
+      },
+      () => {
+        // Power empty callback - reset all visual effects
+        console.log('Power meter empty - resetting all effects');
+        if (this.randomEvents && this.turtle) {
+          this.randomEvents.resetEffects(this.turtle);
+        }
       }
     );
 
@@ -282,23 +289,14 @@ export class GameScene extends Phaser.Scene {
       // Kill any existing scale tweens first
       this.tweens.killTweensOf(this.turtle);
 
-      // Store reference for callback
-      const turtleRef = this.turtle;
-      const randomEventsRef = this.randomEvents;
-
       // Smoothly return to base scale over 1.2 seconds with gentle easing
+      // Note: Visual effects will be reset when power meter reaches 0
       this.tweens.add({
         targets: this.turtle,
         scaleX: this.baseScale,
         scaleY: this.baseScale,
         duration: 1200,
         ease: 'Cubic.easeOut',
-        onComplete: () => {
-          // Reset visual effects (color, glow, etc.) AFTER zoom completes
-          if (randomEventsRef && turtleRef) {
-            randomEventsRef.resetEffects(turtleRef);
-          }
-        },
       });
     }
 

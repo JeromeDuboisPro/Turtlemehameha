@@ -6,15 +6,19 @@ export class PowerMeter {
   private power: number = 0;
   private isCharging: boolean = false;
   private lastThresholdTriggered: number = 0;
+  private wasAboveZero: boolean = false;
   private onThresholdReached?: PowerMeterCallback;
   private onPowerChange?: (power: number) => void;
+  private onPowerEmpty?: () => void;
 
   constructor(
     onThresholdReached?: PowerMeterCallback,
-    onPowerChange?: (power: number) => void
+    onPowerChange?: (power: number) => void,
+    onPowerEmpty?: () => void
   ) {
     this.onThresholdReached = onThresholdReached;
     this.onPowerChange = onPowerChange;
+    this.onPowerEmpty = onPowerEmpty;
   }
 
   /**
@@ -38,9 +42,13 @@ export class PowerMeter {
   public update(delta: number): void {
     const deltaSeconds = delta / 1000;
 
+    // Track if we were above zero before this update
+    const wasPowerAboveZero = this.power > 0;
+
     if (this.isCharging) {
       // Increase power while charging
       this.power = Math.min(100, this.power + POWER_METER.FILL_RATE * deltaSeconds);
+      this.wasAboveZero = true;
     } else {
       // Decrease power when not charging
       this.power = Math.max(0, this.power - POWER_METER.DRAIN_RATE * deltaSeconds);
@@ -52,6 +60,14 @@ export class PowerMeter {
 
     // Check for threshold crossings
     this.checkThresholds();
+
+    // Notify if power just reached zero
+    if (wasPowerAboveZero && this.power === 0 && this.wasAboveZero) {
+      this.wasAboveZero = false;
+      if (this.onPowerEmpty) {
+        this.onPowerEmpty();
+      }
+    }
 
     // Notify listeners of power change
     if (this.onPowerChange) {
