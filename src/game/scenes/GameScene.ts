@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { ASSETS, SPRITE_CONFIG } from '../../utils/constants';
 import { PowerMeter } from '../systems/PowerMeter';
 import { ScoreSystem } from '../systems/ScoreSystem';
+import { RandomEvents } from '../systems/RandomEvents';
 
 export class GameScene extends Phaser.Scene {
   private turtle?: Phaser.GameObjects.Image;
@@ -10,6 +11,7 @@ export class GameScene extends Phaser.Scene {
   private textDisplay?: Phaser.GameObjects.Text;
   private powerMeter?: PowerMeter;
   private scoreSystem?: ScoreSystem;
+  private randomEvents?: RandomEvents;
 
   constructor() {
     super({ key: 'GameScene' });
@@ -74,10 +76,18 @@ export class GameScene extends Phaser.Scene {
     this.textDisplay.setVisible(false);
 
     // Initialize game systems
+    this.randomEvents = new RandomEvents(this);
+
     this.powerMeter = new PowerMeter(
       (power, threshold) => {
         // Threshold reached callback
         console.log(`Threshold reached: ${threshold}% at power ${power}`);
+
+        // Trigger visual effects for this threshold
+        if (this.randomEvents && this.turtle) {
+          this.randomEvents.triggerThresholdEvents(threshold, this.turtle);
+        }
+
         this.events.emit('threshold_reached', threshold, power);
       },
       (power) => {
@@ -260,6 +270,11 @@ export class GameScene extends Phaser.Scene {
       this.scoreSystem.stopScoring();
       // Increment combo for completing a hold
       this.scoreSystem.incrementCombo();
+    }
+
+    // Reset all visual effects
+    if (this.randomEvents && this.turtle) {
+      this.randomEvents.resetEffects(this.turtle);
     }
 
     // Hide and stop text animations
