@@ -1,11 +1,15 @@
 import Phaser from 'phaser';
 import { ASSETS, SPRITE_CONFIG } from '../../utils/constants';
+import { PowerMeter } from '../systems/PowerMeter';
+import { ScoreSystem } from '../systems/ScoreSystem';
 
 export class GameScene extends Phaser.Scene {
   private turtle?: Phaser.GameObjects.Image;
   private isAnimating: boolean = false;
   private currentStage: number = 0;
   private textDisplay?: Phaser.GameObjects.Text;
+  private powerMeter?: PowerMeter;
+  private scoreSystem?: ScoreSystem;
 
   constructor() {
     super({ key: 'GameScene' });
@@ -69,6 +73,24 @@ export class GameScene extends Phaser.Scene {
     this.textDisplay.setOrigin(0.5);
     this.textDisplay.setVisible(false);
 
+    // Initialize game systems
+    this.powerMeter = new PowerMeter(
+      (power, threshold) => {
+        // Threshold reached callback
+        console.log(`Threshold reached: ${threshold}% at power ${power}`);
+        this.events.emit('threshold_reached', threshold, power);
+      },
+      (power) => {
+        // Power change callback
+        this.events.emit('power_changed', power);
+      }
+    );
+
+    this.scoreSystem = new ScoreSystem((score, delta) => {
+      // Score change callback
+      this.events.emit('score_changed', score, delta);
+    });
+
     // Make it responsive - fit to screen
     this.fitToScreen();
 
@@ -127,6 +149,14 @@ export class GameScene extends Phaser.Scene {
     console.log('Starting animation - 3 stage sequence');
     this.isAnimating = true;
     this.currentStage = 1;
+
+    // Start power meter and score system
+    if (this.powerMeter) {
+      this.powerMeter.startCharging();
+    }
+    if (this.scoreSystem) {
+      this.scoreSystem.startScoring(this.powerMeter?.getPower() || 0);
+    }
 
     // STAGE 1: "Turtle" - slight opening
     if (this.turtle) {
@@ -222,6 +252,16 @@ export class GameScene extends Phaser.Scene {
     this.isAnimating = false;
     this.currentStage = 0;
 
+    // Stop power meter and score system
+    if (this.powerMeter) {
+      this.powerMeter.stopCharging();
+    }
+    if (this.scoreSystem) {
+      this.scoreSystem.stopScoring();
+      // Increment combo for completing a hold
+      this.scoreSystem.incrementCombo();
+    }
+
     // Hide and stop text animations
     if (this.textDisplay) {
       this.tweens.killTweensOf(this.textDisplay);
@@ -249,10 +289,34 @@ export class GameScene extends Phaser.Scene {
   }
 
   update(time: number, delta: number) {
-    // Game loop - will handle power meter, particles, effects here
+    // Update power meter
+    if (this.powerMeter) {
+      this.powerMeter.update(delta);
+    }
+
+    // Update score system
+    if (this.scoreSystem && this.powerMeter) {
+      this.scoreSystem.update(delta, this.powerMeter.getPower());
+    }
+
+    // Game loop - will handle particles, effects here
     if (this.isAnimating) {
       // Update animation/effects based on time
       this.events.emit('animation_update', delta);
     }
+  }
+
+  /**
+   * Get the power meter instance
+   */
+  public getPowerMeter(): PowerMeter | undefined {
+    return this.powerMeter;
+  }
+
+  /**
+   * Get the score system instance
+   */
+  public getScoreSystem(): ScoreSystem | undefined {
+    return this.scoreSystem;
   }
 }

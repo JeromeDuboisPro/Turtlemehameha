@@ -1,0 +1,143 @@
+.power-meter-container {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  max-width: 500px;
+  z-index: 1000;
+  font-family: 'Arial', sans-serif;
+}
+
+.power-meter-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 0 4px;
+}
+
+.power-meter-text {
+  font-size: 16px;
+  font-weight: bold;
+  color: #ffffff;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  letter-spacing: 2px;
+}
+
+.power-meter-value {
+  font-size: 18px;
+  font-weight: bold;
+  color: #ffffff;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.power-meter-bar-container {
+  position: relative;
+  width: 100%;
+  height: 30px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 3px solid rgba(255, 255, 255, 0.8);
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.power-meter-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  transition: width 0.1s ease-out, background-color 0.3s ease;
+  border-radius: 12px;
+}
+
+.power-meter-bar.charging {
+  animation: pulse 0.5s infinite alternate;
+}
+
+.power-meter-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 100%
+  );
+  animation: shimmer 1s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.threshold-marker {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 2px;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.threshold-line {
+  width: 2px;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.4);
+  transition: background 0.3s ease;
+}
+
+.threshold-marker.reached .threshold-line {
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+}
+
+.next-threshold-indicator {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 14px;
+  color: #ffffff;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  font-weight: bold;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .power-meter-container {
+    width: 90%;
+  }
+
+  .power-meter-text {
+    font-size: 14px;
+  }
+
+  .power-meter-value {
+    font-size: 16px;
+  }
+
+  .power-meter-bar-container {
+    height: 25px;
+  }
+
+  .next-threshold-indicator {
+    font-size: 12px;
+  }
+}
