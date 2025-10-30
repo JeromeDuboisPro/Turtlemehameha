@@ -282,19 +282,24 @@ export class GameScene extends Phaser.Scene {
       // Kill any existing scale tweens first
       this.tweens.killTweensOf(this.turtle);
 
-      // Smoothly return to base scale over 0.5 seconds
+      // Store reference for callback
+      const turtleRef = this.turtle;
+      const randomEventsRef = this.randomEvents;
+
+      // Smoothly return to base scale over 1.2 seconds with gentle easing
       this.tweens.add({
         targets: this.turtle,
         scaleX: this.baseScale,
         scaleY: this.baseScale,
-        duration: 500,
-        ease: 'Back.easeOut',
+        duration: 1200,
+        ease: 'Cubic.easeOut',
+        onComplete: () => {
+          // Reset visual effects (color, glow, etc.) AFTER zoom completes
+          if (randomEventsRef && turtleRef) {
+            randomEventsRef.resetEffects(turtleRef);
+          }
+        },
       });
-    }
-
-    // Reset visual effects (color, glow, etc.) without affecting scale
-    if (this.randomEvents && this.turtle) {
-      this.randomEvents.resetEffects(this.turtle);
     }
 
     // Hide and stop text animations
