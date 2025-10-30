@@ -12,6 +12,8 @@ export class GameScene extends Phaser.Scene {
   private powerMeter?: PowerMeter;
   private scoreSystem?: ScoreSystem;
   private randomEvents?: RandomEvents;
+  private loopingSound?: Phaser.Sound.BaseSound;
+  private longSound?: Phaser.Sound.BaseSound;
 
   constructor() {
     super({ key: 'GameScene' });
@@ -189,8 +191,8 @@ export class GameScene extends Phaser.Scene {
     }
 
     // Start playing long sound
-    const longSound = this.sound.add('hiin_long');
-    longSound.play();
+    this.longSound = this.sound.add('hiin_long');
+    this.longSound.play();
 
     // STAGE 2: "Meeeeh!" - medium opening (after 500ms)
     this.time.delayedCall(500, () => {
@@ -220,7 +222,7 @@ export class GameScene extends Phaser.Scene {
     });
 
     // STAGE 3: "Ahahahaha!" - full opening with kamehameha (after long sound completes)
-    longSound.once('complete', () => {
+    this.longSound.once('complete', () => {
       if (!this.isAnimating) return;
 
       this.currentStage = 3;
@@ -246,9 +248,8 @@ export class GameScene extends Phaser.Scene {
       }
 
       // Start looping short sound
-      const shortSound = this.sound.add('hiin_short', { loop: true });
-      shortSound.play();
-      this.registry.set('loopingSound', shortSound);
+      this.loopingSound = this.sound.add('hiin_short', { loop: true });
+      this.loopingSound.play();
     });
 
     // Emit event for game systems (power meter, score, etc.)
@@ -284,15 +285,23 @@ export class GameScene extends Phaser.Scene {
       this.textDisplay.setScale(1.0); // Reset scale
     }
 
-    // Stop all sounds
-    this.sound.stopAll();
-
-    // Also stop the looping sound specifically
-    const loopingSound = this.registry.get('loopingSound');
-    if (loopingSound) {
-      loopingSound.stop();
-      this.registry.remove('loopingSound');
+    // Stop looping sound first (before stopAll)
+    if (this.loopingSound) {
+      console.log('Stopping looping sound');
+      this.loopingSound.stop();
+      this.loopingSound.destroy();
+      this.loopingSound = undefined;
     }
+
+    // Stop long sound if still playing
+    if (this.longSound) {
+      this.longSound.stop();
+      this.longSound.destroy();
+      this.longSound = undefined;
+    }
+
+    // Stop all other sounds
+    this.sound.stopAll();
 
     // Reset turtle to shut mouth
     if (this.turtle) {

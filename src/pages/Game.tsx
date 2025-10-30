@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { IonContent, IonPage } from '@ionic/react';
 import { GameCanvas } from '../components/GameCanvas';
 import { PowerMeterUI } from '../components/PowerMeterUI';
@@ -7,8 +7,6 @@ import { GameScene } from '../game/scenes/GameScene';
 import './Game.css';
 
 const Game: React.FC = () => {
-  console.log('Game page: Rendering');
-
   const [power, setPower] = useState(0);
   const [isCharging, setIsCharging] = useState(false);
   const [nextThreshold, setNextThreshold] = useState<number | null>(25);
@@ -16,13 +14,19 @@ const Game: React.FC = () => {
   const [combo, setCombo] = useState(0);
   const [comboTimeRemaining, setComboTimeRemaining] = useState(0);
 
-  const handleGameReady = (game: Phaser.Game) => {
+  const sceneRef = useRef<GameScene | null>(null);
+  const listenersRegistered = useRef(false);
+
+  const handleGameReady = useCallback((game: Phaser.Game) => {
     console.log('Game page: Game initialized successfully!', game);
 
     // Get the GameScene instance
     const scene = game.scene.getScene('GameScene') as GameScene;
 
-    if (scene) {
+    if (scene && !listenersRegistered.current) {
+      sceneRef.current = scene;
+      listenersRegistered.current = true;
+
       // Listen to power meter events
       scene.events.on('power_changed', (newPower: number) => {
         setPower(newPower);
@@ -57,7 +61,20 @@ const Game: React.FC = () => {
         console.log(`UI: Threshold ${threshold}% reached!`);
       });
     }
-  };
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (sceneRef.current) {
+        sceneRef.current.events.off('power_changed');
+        sceneRef.current.events.off('score_changed');
+        sceneRef.current.events.off('animation_started');
+        sceneRef.current.events.off('animation_stopped');
+        sceneRef.current.events.off('threshold_reached');
+      }
+    };
+  }, []);
 
   return (
     <IonPage>
